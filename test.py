@@ -1,165 +1,184 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+from sklearn.cluster import KMeans
+from mpl_toolkits.mplot3d import Axes3D
 
 # Seed for reproducibility
 np.random.seed(42)
 
-# Function to generate DataFrame for a class
-def generate_class_data(mean, cov, size, class_label):
+# ================== Data Generation Functions ==================
+def generate_2d_class_data(mean, cov, size, class_label):
+    """Generate 2D data with Age and Weight_Loss features"""
     samples = np.random.multivariate_normal(mean, cov, size=size)
-    df = pd.DataFrame({
-        'X': np.round(samples[:, 0], 2),
-        'Y': np.round(samples[:, 1], 2),
-        'Z': np.round(samples[:, 2], 2),
+    return pd.DataFrame({
+        'Age': np.round(samples[:, 0], 0),
+        'Weight_Loss': np.round(samples[:, 1], 2),
         'Class': str(class_label)
     })
-    return df
 
-# Covariance matrix (same for all classes)
-covariance = [[0.5, 0., 0.],
-             [0., 0.5, 0.],
-             [0., 0., 0.5]]
+def generate_3d_class_data(mean, cov, size, class_label):
+    """Generate 3D data with Age, Weight_Loss, and Height features"""
+    samples = np.random.multivariate_normal(mean, cov, size=size)
+    return pd.DataFrame({
+        'Age': np.round(samples[:, 0], 0),
+        'Weight_Loss': np.round(samples[:, 1], 2),
+        'Height': np.round(samples[:, 2], 2),
+        'Class': str(class_label)
+    })
 
-# Generate data for Class 1 (Blue)
-mean_class1_part1 = [0, 0, 0]
-df_class1_part1 = generate_class_data(mean_class1_part1, covariance, size=7, class_label='1')
-
-mean_class1_part2 = [6, 6, 6]
-df_class1_part2 = generate_class_data(mean_class1_part2, covariance, size=7, class_label='1')
-
-mean_class1_part3 = [-6, 6, 6]
-df_class1_part3 = generate_class_data(mean_class1_part3, covariance, size=6, class_label='1')
-
-df_class1 = pd.concat([df_class1_part1, df_class1_part2, df_class1_part3], ignore_index=True)
-
-# Generate data for Class 2 (Red)
-mean_class2 = [-3, 3, 3]
-df_class2 = generate_class_data(mean_class2, covariance, size=20, class_label='2')
-
-# Generate data for Class 3 (Green)
-mean_class3 = [0, 6, 6]
-df_class3 = generate_class_data(mean_class3, covariance, size=20, class_label='3')
-
-# Generate data for Class 4 (Orange)
-mean_class4 = [0, 6, 0]
-df_class4 = generate_class_data(mean_class4, covariance, size=20, class_label='4')
-
-# Merge all classes into a single DataFrame
-df_all_classes = pd.concat([df_class1, df_class2, df_class3, df_class4], ignore_index=True)
-
-# Visualization: 3D Scatter Plot
-fig = plt.figure(figsize=(12, 8))
-ax = fig.add_subplot(111, projection='3d')
-
-# Scatter plot for each class
-ax.scatter(df_class1['X'], df_class1['Y'], df_class1['Z'], c='blue', label='Class 1 (Blue)', alpha=0.7)
-ax.scatter(df_class2['X'], df_class2['Y'], df_class2['Z'], c='red', label='Class 2 (Red)', alpha=0.7)
-ax.scatter(df_class3['X'], df_class3['Y'], df_class3['Z'], c='green', label='Class 3 (Green)', alpha=0.7)
-ax.scatter(df_class4['X'], df_class4['Y'], df_class4['Z'], c='orange', label='Class 4 (Orange)', alpha=0.7)
-
-ax.set_title('3D Scatter Plot with Four Classes', fontsize=16, fontweight='bold')
-ax.set_xlabel('X-axis', fontsize=12)
-ax.set_ylabel('Y-axis', fontsize=12)
-ax.set_zlabel('Z-axis', fontsize=12)
-ax.legend(fontsize=12)
-
-plt.show()
-
-# Enhanced Function to Display DataFrame in a Separate Window Using Matplotlib Table
-def display_dataframe(df, title):
-    # Define table colors
-    header_color = '#40466e'  # Dark blue
-    row_colors = ['#f1f1f2', '#ffffff']  # Alternating light grey and white
-    cell_text = df.values.tolist()
+# ================== DataFrame Formatting Function ==================
+def format_merged_dataframe(df, rows_per_class=3):
+    """Format dataframe with sample rows from each class and continuation dots"""
+    merged = []
+    classes = sorted(df['Class'].unique(), key=lambda x: int(x))
     
-    # Create a new figure with adequate size
-    fig, ax = plt.subplots(figsize=(8, 0.5 + 0.4 * len(df)))  # Dynamic height based on number of rows
-    ax.axis('off')  # Hide axes
+    for cls in classes:
+        class_data = df[df['Class'] == cls]
+        sample = class_data.head(rows_per_class)
+        merged.append(sample)
+        
+        if len(class_data) > rows_per_class:
+            dots = pd.DataFrame(
+                [['...' for _ in range(len(df.columns))]], 
+                columns=df.columns
+            )
+            dots['Class'] = str(cls)  # Maintain class identifier
+            merged.append(dots)
+    
+    return pd.concat(merged, ignore_index=True)
 
-    # Create table
-    table = ax.table(cellText=cell_text,
-                     colLabels=df.columns,
-                     cellLoc='center',
-                     loc='center',
-                     colColours=[header_color]*len(df.columns))
-    
-    # Style the table
-    table.auto_set_font_size(False)
-    table.set_fontsize(12)  # Increased font size for readability
-    table.scale(1, 1.5)  # Increased cell height
+# ================== 2D Data Pipeline ==================
+# Generate 2D data
+cov_2d = [[20., 0.], [0., 0.5]]
+df1_2d = pd.concat([
+    generate_2d_class_data([25, 0], cov_2d, 7, '1'),
+    generate_2d_class_data([75, 6], cov_2d, 7, '1'),
+    generate_2d_class_data([50, 6], cov_2d, 6, '1')
+])
+df2_2d = generate_2d_class_data([40, 3], cov_2d, 20, '2')
+df3_2d = generate_2d_class_data([60, 6], cov_2d, 20, '3')
+df4_2d = generate_2d_class_data([80, 0], cov_2d, 20, '4')
+df_all_2d = pd.concat([df1_2d, df2_2d, df3_2d, df4_2d])
 
-    # Apply alternating row colors
-    for i, key in enumerate(table.get_celld().keys()):
-        if key[0] == 0:
-            # Header row
-            table[key].set_facecolor(header_color)
-            table[key].set_text_props(color='w', weight='bold')
-        else:
-            # Data rows
-            table[key].set_facecolor(row_colors[i % 2])
+# 2D Clustering
+kmeans_2d = KMeans(n_clusters=4, random_state=42)
+df_all_2d['Cluster'] = kmeans_2d.fit_predict(df_all_2d[['Age', 'Weight_Loss']])
+
+# ================== 3D Data Pipeline ==================
+# Generate 3D data
+cov_3d = [[20., 0., 0.], [0., 0.5, 0.], [0., 0., 0.5]]
+df1_3d = pd.concat([
+    generate_3d_class_data([25, 0, 0], cov_3d, 7, '1'),
+    generate_3d_class_data([75, 6, 6], cov_3d, 7, '1'),
+    generate_3d_class_data([50, 6, 6], cov_3d, 6, '1')
+])
+df2_3d = generate_3d_class_data([40, 3, 3], cov_3d, 20, '2')
+df3_3d = generate_3d_class_data([60, 6, 6], cov_3d, 20, '3')
+df4_3d = generate_3d_class_data([80, 6, 0], cov_3d, 20, '4')
+df_all_3d = pd.concat([df1_3d, df2_3d, df3_3d, df4_3d])
+
+# 3D Clustering
+kmeans_3d = KMeans(n_clusters=4, random_state=42)
+df_all_3d['Cluster'] = kmeans_3d.fit_predict(df_all_3d[['Age', 'Weight_Loss', 'Height']])
+
+# ================== Visualization ==================
+def plot_with_centroids(df, centroids, title, dimensions=2):
+    """Generic plotting function with centroids"""
+    fig = plt.figure(figsize=(12, 6) if dimensions == 2 else (18, 8))
     
-    # Add borders
-    for key, cell in table.get_celld().items():
-        cell.set_edgecolor('black')
-    
-    # Set title
-    plt.title(title, fontsize=16, fontweight='bold', pad=5)
-    
+    if dimensions == 2:
+        # Original Classes
+        plt.subplot(121)
+        for class_label, color in [('1', 'blue'), ('2', 'red'), ('3', 'green'), ('4', 'orange')]:
+            class_data = df[df['Class'] == class_label]
+            plt.scatter(class_data['Age'], class_data['Weight_Loss'], 
+                        c=color, label=f'Class {class_label}', alpha=0.6)
+        plt.title(f'2D {title}\nOriginal Classes')
+        plt.xlabel('Age')
+        plt.ylabel('Weight Loss')
+        plt.legend()
+
+        # Clustered Data with Centroids
+        plt.subplot(122)
+        scatter = plt.scatter(df['Age'], df['Weight_Loss'], c=df['Cluster'], cmap='viridis', alpha=0.6)
+        plt.scatter(centroids[:, 0], centroids[:, 1],
+                    s=200, marker='X', c='red', edgecolor='black', label='Centroids')
+        plt.title(f'2D {title}\nClustered Data with Centroids')
+        plt.colorbar(scatter, label='Cluster')
+        plt.legend()
+        
+    else:  # 3D
+        ax1 = fig.add_subplot(121, projection='3d')
+        for class_label, color in [('1', 'blue'), ('2', 'red'), ('3', 'green'), ('4', 'orange')]:
+            class_data = df[df['Class'] == class_label]
+            ax1.scatter(class_data['Age'], class_data['Weight_Loss'], class_data['Height'],
+                       c=color, label=f'Class {class_label}', alpha=0.6)
+        ax1.set_title(f'3D {title}\nOriginal Classes')
+        ax1.legend()
+
+        ax2 = fig.add_subplot(122, projection='3d')
+        scatter = ax2.scatter(df['Age'], df['Weight_Loss'], df['Height'],
+                             c=df['Cluster'], cmap='viridis', alpha=0.6)
+        ax2.scatter(centroids[:, 0], centroids[:, 1], centroids[:, 2],
+                   s=200, marker='X', c='red', edgecolor='black', label='Centroids')
+        ax2.set_title(f'3D {title}\nClustered Data with Centroids')
+        fig.colorbar(scatter, ax=ax2, label='Cluster')
+        ax2.legend()
+
     plt.tight_layout()
     plt.show()
 
-# Function to format merged DataFrame with 4 rows per class and dots
-def format_merged_dataframe(df, rows_per_class=4):
-    merged_sample_rows = []
-    classes = sorted(df['Class'].unique(), key=lambda x: int(x))  # Sort classes numerically
+# Plot 2D data with centroids
+plot_with_centroids(df_all_2d, kmeans_2d.cluster_centers_, 'Weight Loss Analysis', dimensions=2)
 
-    for cls in classes:
-        class_df = df[df['Class'] == cls].head(rows_per_class)
-        merged_sample_rows.append(class_df)
-        # Add a row of dots to indicate continuation, if more rows exist for the class
-        if len(df[df['Class'] == cls]) > rows_per_class:
-            dots = pd.DataFrame([['...', '...', '...', '..']], columns=df.columns)
-            merged_sample_rows.append(dots)
+# Plot 3D data with centroids
+plot_with_centroids(df_all_3d, kmeans_3d.cluster_centers_, 'Health Metrics Analysis', dimensions=3)
 
-    # Concatenate all sampled rows
-    df_merged_formatted = pd.concat(merged_sample_rows, ignore_index=True)
-    return df_merged_formatted
+# ================== Formatted Data Display ==================
+def display_formatted_data(df, title):
+    """Display formatted dataframe with continuation dots"""
+    formatted_df = format_merged_dataframe(df)
+    
+    # Create figure
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.axis('off')
+    
+    # Create table
+    table = ax.table(
+        cellText=formatted_df.values,
+        colLabels=formatted_df.columns,
+        cellLoc='center',
+        loc='center'
+    )
+    
+    # Style table
+    table.auto_set_font_size(False)
+    table.set_fontsize(12)
+    table.scale(1, 1.5)
+    
+    # Highlight headers
+    for (i, j), cell in table.get_celld().items():
+        if i == 0:
+            cell.set_facecolor('#40466e')
+            cell.set_text_props(color='white', weight='bold')
+    
+    plt.title(f'Formatted Data View: {title}', pad=20)
+    plt.show()
 
-# Display individual class DataFrames with enhanced tables
-# display_dataframe(df_class1.head(5), "Class 1 DataFrame (First 5 Rows)")
-# display_dataframe(df_class2.head(5), "Class 2 DataFrame (First 5 Rows)")
-# display_dataframe(df_class3.head(5), "Class 3 DataFrame (First 5 Rows)")
-# display_dataframe(df_class4.head(5), "Class 4 DataFrame (First 5 Rows)")
+# Display formatted data
+display_formatted_data(df_all_2d, '2D Dataset Sample')
+display_formatted_data(df_all_3d, '3D Dataset Sample')
 
-# Format the merged DataFrame
-df_merged_formatted = format_merged_dataframe(df_all_classes, rows_per_class=4)
+# ================== Data Export ==================
+# Save formatted data samples
+format_merged_dataframe(df_all_2d).to_csv('formatted_2d_sample.csv', index=False)
+format_merged_dataframe(df_all_3d).to_csv('formatted_3d_sample.csv', index=False)
 
-# Display the formatted merged DataFrame
-display_dataframe(df_merged_formatted, "Merged DataFrame (Sample Rows)")
+# Save full datasets
+df_all_2d.to_csv('full_2d_dataset.csv', index=False)
+df_all_3d.to_csv('full_3d_dataset.csv', index=False)
 
-# Display the first few rows of each DataFrame in the console (optional)
-print("Class 1 DataFrame:")
-print(df_class1.head())
-
-print("\nClass 2 DataFrame:")
-print(df_class2.head())
-
-print("\nClass 3 DataFrame:")
-print(df_class3.head())
-
-print("\nClass 4 DataFrame:")
-print(df_class4.head())
-
-print("\nMerged DataFrame (Sample Rows):")
-print(df_merged_formatted)
-
-# Save each DataFrame to CSV files
-df_class1.to_csv('class1_data.csv', index=False)
-df_class2.to_csv('class2_data.csv', index=False)
-df_class3.to_csv('class3_data.csv', index=False)
-df_class4.to_csv('class4_data.csv', index=False)
-df_all_classes.to_csv('all_classes_data.csv', index=False)
-df_merged_formatted.to_csv('merged_sample_data.csv', index=False)
-
-print("\nAll DataFrames have been saved to CSV files.")
+print("Data files saved:")
+print("- formatted_2d_sample.csv\n- formatted_3d_sample.csv")
+print("- full_2d_dataset.csv\n- full_3d_dataset.csv")
