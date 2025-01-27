@@ -93,54 +93,58 @@ kmeans_3d = KMeans(n_clusters=4, random_state=42)
 df_all_3d['Cluster'] = kmeans_3d.fit_predict(df_all_3d[['Age', 'Weight_Loss', 'Height']])
 
 # ================== Visualization Functions ==================
-def plot_2d_data_with_clustering(df, centroids, title):
-    """Plot 2D data before and after clustering."""
-    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
-
-    # All points in same color before clustering
-    axes[0].scatter(df['Age'], df['Weight_Loss'], c='gray', alpha=0.6)
-    axes[0].set_title(f'{title} (Before Clustering)')
-    axes[0].set_xlabel('Age')
-    axes[0].set_ylabel('Weight Loss')
-
-    # After clustering
-    scatter = axes[1].scatter(df['Age'], df['Weight_Loss'], c=df['Cluster'], cmap='viridis', alpha=0.6)
-    axes[1].scatter(centroids[:, 0], centroids[:, 1],
-                    s=200, marker='X', c='red', edgecolor='black', label='Centroids')
-    axes[1].set_title(f'{title} (After Clustering)')
-    axes[1].set_xlabel('Age')
-    axes[1].set_ylabel('Weight Loss')
-    cbar = fig.colorbar(scatter, ax=axes[1], label='Cluster')
-    axes[1].legend()
-
+def plot_2d_before_clustering(df, title):
+    """Plot 2D data before clustering in a separate window."""
+    plt.figure(figsize=(8, 6))
+    plt.scatter(df['Age'], df['Weight_Loss'], c='gray', alpha=0.6)
+    plt.title(f'{title} (Before Clustering)')
+    plt.xlabel('Age')
+    plt.ylabel('Weight Loss')
+    plt.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.show()
 
-def plot_3d_data_with_clustering(df, centroids, title):
-    """Plot 3D data before and after clustering."""
-    fig = plt.figure(figsize=(16, 8))
-
-    # All points in same color before clustering
-    ax1 = fig.add_subplot(121, projection='3d')
-    ax1.scatter(df['Age'], df['Weight_Loss'], df['Height'], c='gray', alpha=0.6)
-    ax1.set_title(f'{title} (Before Clustering)')
-    ax1.set_xlabel('Age')
-    ax1.set_ylabel('Weight Loss')
-    ax1.set_zlabel('Height')
-
-    # After clustering
-    ax2 = fig.add_subplot(122, projection='3d')
-    scatter = ax2.scatter(df['Age'], df['Weight_Loss'], df['Height'],
-                          c=df['Cluster'], cmap='viridis', alpha=0.6)
-    ax2.scatter(centroids[:, 0], centroids[:, 1], centroids[:, 2],
+def plot_2d_after_clustering(df, centroids, title):
+    """Plot 2D data after clustering in a separate window."""
+    plt.figure(figsize=(8, 6))
+    scatter = plt.scatter(df['Age'], df['Weight_Loss'], c=df['Cluster'], cmap='viridis', alpha=0.6)
+    plt.scatter(centroids[:, 0], centroids[:, 1],
                 s=200, marker='X', c='red', edgecolor='black', label='Centroids')
-    ax2.set_title(f'{title} (After Clustering)')
-    ax2.set_xlabel('Age')
-    ax2.set_ylabel('Weight Loss')
-    ax2.set_zlabel('Height')
-    cbar = fig.colorbar(scatter, ax=ax2, shrink=0.5, aspect=10, label='Cluster')
-    ax2.legend()
+    plt.title(f'{title} (After Clustering)')
+    plt.xlabel('Age')
+    plt.ylabel('Weight Loss')
+    plt.colorbar(scatter, label='Cluster')
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.show()
 
+def plot_3d_before_clustering(df, title):
+    """Plot 3D data before clustering in a separate window."""
+    fig = plt.figure(figsize=(8, 6))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(df['Age'], df['Weight_Loss'], df['Height'], c='gray', alpha=0.6)
+    ax.set_title(f'{title} (Before Clustering)')
+    ax.set_xlabel('Age')
+    ax.set_ylabel('Weight Loss')
+    ax.set_zlabel('Height')
+    plt.tight_layout()
+    plt.show()
+
+def plot_3d_after_clustering(df, centroids, title):
+    """Plot 3D data after clustering in a separate window."""
+    fig = plt.figure(figsize=(8, 6))
+    ax = fig.add_subplot(111, projection='3d')
+    scatter = ax.scatter(df['Age'], df['Weight_Loss'], df['Height'],
+                         c=df['Cluster'], cmap='viridis', alpha=0.6)
+    ax.scatter(centroids[:, 0], centroids[:, 1], centroids[:, 2],
+               s=200, marker='X', c='red', edgecolor='black', label='Centroids')
+    ax.set_title(f'{title} (After Clustering)')
+    ax.set_xlabel('Age')
+    ax.set_ylabel('Weight Loss')
+    ax.set_zlabel('Height')
+    fig.colorbar(scatter, ax=ax, shrink=0.5, aspect=10, label='Cluster')
+    ax.legend()
     plt.tight_layout()
     plt.show()
 
@@ -175,11 +179,13 @@ def display_formatted_data_with_clusters(df, title):
     plt.show()
 
 # ================== Visualization ==================
-# Plot 2D data
-plot_2d_data_with_clustering(df_all_2d, kmeans_2d.cluster_centers_, '2D Weight Loss Analysis')
+# Plot 2D data in separate windows
+plot_2d_before_clustering(df_all_2d, '2D Weight Loss Analysis')
+plot_2d_after_clustering(df_all_2d, kmeans_2d.cluster_centers_, '2D Weight Loss Analysis')
 
-# Plot 3D data
-plot_3d_data_with_clustering(df_all_3d, kmeans_3d.cluster_centers_, '3D Health Metrics Analysis')
+# Plot 3D data in separate windows
+plot_3d_before_clustering(df_all_3d, '3D Health Metrics Analysis')
+plot_3d_after_clustering(df_all_3d, kmeans_3d.cluster_centers_, '3D Health Metrics Analysis')
 
 # ================== Display and Save Data ==================
 # Display samples of 2D data points with clusters
