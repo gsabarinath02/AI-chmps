@@ -17,10 +17,11 @@ def generate_class_data(mean, cov, size, class_label):
     return df
 
 # Covariance matrix (same for all classes)
-covariance = [[20., 0., 0.],
-             [0., 0.5, 0.],
-             [0., 0., 0.5]]
-
+covariance = [
+    [20., 0., 0.],
+    [0., 0.5, 0.],
+    [0., 0., 0.5]
+]
 
 # Generate data for Class 1 (Blue)
 mean_class1_part1 = [25, 0, 0]
@@ -50,22 +51,59 @@ df_class4 = generate_class_data(mean_class4, covariance, size=20, class_label='4
 df_all_classes = pd.concat([df_class1, df_class2, df_class3, df_class4], ignore_index=True)
 
 # Visualization: 3D Scatter Plot
-fig = plt.figure(figsize=(12, 8))
-ax = fig.add_subplot(111, projection='3d')
+fig_3d = plt.figure(figsize=(12, 8))
+ax_3d = fig_3d.add_subplot(111, projection='3d')
 
 # Scatter plot for each class
-ax.scatter(df_class1['Age'], df_class1['Weight_Loss'], df_class1['Height'], c='blue', label='Class 1 (Blue)', alpha=0.7)
-ax.scatter(df_class2['Age'], df_class2['Weight_Loss'], df_class2['Height'], c='red', label='Class 2 (Red)', alpha=0.7)
-ax.scatter(df_class3['Age'], df_class3['Weight_Loss'], df_class3['Height'], c='green', label='Class 3 (Green)', alpha=0.7)
-ax.scatter(df_class4['Age'], df_class4['Weight_Loss'], df_class4['Height'], c='orange', label='Class 4 (Orange)', alpha=0.7)
+ax_3d.scatter(df_class1['Age'], df_class1['Weight_Loss'], df_class1['Height'], c='blue', label='Class 1 (Blue)', alpha=0.7)
+ax_3d.scatter(df_class2['Age'], df_class2['Weight_Loss'], df_class2['Height'], c='red', label='Class 2 (Red)', alpha=0.7)
+ax_3d.scatter(df_class3['Age'], df_class3['Weight_Loss'], df_class3['Height'], c='green', label='Class 3 (Green)', alpha=0.7)
+ax_3d.scatter(df_class4['Age'], df_class4['Weight_Loss'], df_class4['Height'], c='orange', label='Class 4 (Orange)', alpha=0.7)
 
 # Set plot titles and labels with new column names
-ax.set_title('3D Scatter Plot with Four Classes', fontsize=16, fontweight='bold')
-ax.set_xlabel('Age', fontsize=12)
-ax.set_ylabel('Weight_Loss', fontsize=12)
-ax.set_zlabel('Height', fontsize=12)
-ax.legend(fontsize=12)
+ax_3d.set_title('3D Scatter Plot with Four Classes', fontsize=16, fontweight='bold')
+ax_3d.set_xlabel('Age', fontsize=12)
+ax_3d.set_ylabel('Weight Loss', fontsize=12)
+ax_3d.set_zlabel('Height', fontsize=12)
+ax_3d.legend(fontsize=12)
 
+plt.show()
+
+# Visualization: 2D Scatter Plots
+fig_2d, axes = plt.subplots(1, 3, figsize=(18, 6))
+
+# Define pairs of variables to plot
+plot_pairs = [
+    ('Age', 'Weight_Loss'),
+    ('Age', 'Height'),
+    ('Weight_Loss', 'Height')
+]
+
+colors = {
+    '1': 'blue',
+    '2': 'red',
+    '3': 'green',
+    '4': 'orange'
+}
+
+labels = {
+    '1': 'Class 1 (Blue)',
+    '2': 'Class 2 (Red)',
+    '3': 'Class 3 (Green)',
+    '4': 'Class 4 (Orange)'
+}
+
+# Plot each pair
+for ax, (x, y) in zip(axes, plot_pairs):
+    for cls in df_all_classes['Class'].unique():
+        subset = df_all_classes[df_all_classes['Class'] == cls]
+        ax.scatter(subset[x], subset[y], c=colors[cls], label=labels[cls], alpha=0.7)
+    ax.set_xlabel(x, fontsize=12)
+    ax.set_ylabel(y, fontsize=12)
+    ax.set_title(f'{x} vs {y}', fontsize=14, fontweight='bold')
+    ax.legend(fontsize=10)
+
+plt.tight_layout()
 plt.show()
 
 # Enhanced Function to Display DataFrame in a Separate Window Using Matplotlib Table
